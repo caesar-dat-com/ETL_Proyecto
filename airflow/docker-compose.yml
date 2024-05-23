@@ -1,0 +1,67 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+
+  webserver:
+    image: apache/airflow:2.5.1
+    environment:
+      - AIRFLOW__CORE__FERNET_KEY=4-Ls7YvNOQJqN-PKccxF_y3_XJHOmAc5LCZSoFk2CBM=
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    depends_on:
+      - postgres
+      - kafka
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./csv_actividades:/opt/airflow/csv_actividades
+      - ./csv_inspecciones:/opt/airflow/csv_inspecciones
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./BIBLIOCASTIA/TRANFORMACION CSV A XLSX:/opt/airflow/dags/inspecciones
+    command: webserver
+
+  scheduler:
+    image: apache/airflow:2.5.1
+    environment:
+      - AIRFLOW__CORE__FERNET_KEY=4-Ls7YvNOQJqN-PKccxF_y3_XJHOmAc5LCZSoFk2CBM=
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    depends_on:
+      - postgres
+      - kafka
+    volumes:
+      - ./csv_actividades:/opt/airflow/csv_actividades
+      - ./csv_inspecciones:/opt/airflow/csv_inspecciones
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./BIBLIOCASTIA/TRANFORMACION CSV A XLSX:/opt/airflow/dags/inspecciones
+    command: scheduler
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092  # Ensure this line is added correctly
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+
+volumes:
+  postgres_db:
