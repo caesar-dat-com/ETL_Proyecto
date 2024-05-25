@@ -1,0 +1,6 @@
+# Ignorar archivos de configuración y temporales de Python
+__pycache__/
+*.py[cod]
+
+
+
